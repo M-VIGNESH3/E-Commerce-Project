@@ -3,7 +3,7 @@ import re
 import json
 
 files_to_process = [
-    r'kubernetes\deployments\all-deployments-backup.yaml',
+    r'kubernetes\deployments\all-deployments.yaml',
     r'kubernetes\services\all-services-backup.yaml',
     r'kubernetes\configmaps\clahanstore-config.yaml',
     r'kubernetes\configmaps\secrets.yaml',
@@ -35,7 +35,6 @@ def process_file(filepath, is_deployment):
         if not doc:
             continue
         
-        # skip initial ---
         if doc.startswith('---'):
             doc = doc[3:].strip()
             
@@ -48,11 +47,9 @@ def process_file(filepath, is_deployment):
         name = name_match.group(1).strip()
         kind = kind_match.group(1).strip()
         
-        # Replace namespace with {{ .Values.namespace }}
         doc = re.sub(r'namespace:\s*clahanstore', 'namespace: {{ .Values.namespace }}', doc)
         
         camel_name = to_camel_case(name)
-
         file_name = f"{name}-{kind.lower()}.yaml"
         
         if kind == 'Namespace':
@@ -60,7 +57,7 @@ def process_file(filepath, is_deployment):
                 f.write(doc)
             continue
             
-        if kind == 'Deployment':
+        if kind in ['Deployment', 'StatefulSet']:
             if camel_name not in values:
                 values[camel_name] = {}
                 

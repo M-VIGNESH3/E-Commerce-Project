@@ -1,15 +1,13 @@
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: cart-service
   namespace: {{ .Values.namespace }}
 spec:
+  serviceName: cart-service
   replicas: {{ .Values.cartService.replicas }}
-  strategy:
+  updateStrategy:
     type: RollingUpdate
-    rollingUpdate:
-      maxUnavailable: 1
-      maxSurge: 1
   selector:
     matchLabels:
       app: cart-service
@@ -18,6 +16,10 @@ spec:
       labels:
         app: cart-service
     spec:
+      initContainers:
+      - name: wait-for-mongodb
+        image: {{ .Values.cartService.image.repository }}:{{ .Values.cartService.image.tag }}
+        command: ['sh', '-c', 'echo "Waiting 15s for MongoDB to be ready..."; sleep 15; echo "Wait complete, starting service!"']
       containers:
       - name: cart-service
         image: {{ .Values.cartService.image.repository }}:{{ .Values.cartService.image.tag }}
@@ -48,3 +50,19 @@ spec:
           limits:
             cpu: 250m
             memory: 256Mi
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3006
+          initialDelaySeconds: 15
+          periodSeconds: 20
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 3006
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 3

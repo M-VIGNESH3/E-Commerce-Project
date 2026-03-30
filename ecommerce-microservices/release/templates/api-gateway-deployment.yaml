@@ -1,3 +1,6 @@
+# =============================================
+# FRONTEND DEPLOYMENTS (Standard Deployments)
+# =============================================
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -8,8 +11,8 @@ spec:
   strategy:
     type: RollingUpdate
     rollingUpdate:
-      maxUnavailable: 1
-      maxSurge: 1
+      maxSurge: 25%
+      maxUnavailable: 25%
   selector:
     matchLabels:
       app: api-gateway
@@ -33,3 +36,19 @@ spec:
           limits:
             cpu: 250m
             memory: 256Mi
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 15
+          periodSeconds: 20
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 3000
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 3

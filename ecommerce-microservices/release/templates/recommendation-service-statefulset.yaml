@@ -1,15 +1,13 @@
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: recommendation-service
   namespace: {{ .Values.namespace }}
 spec:
+  serviceName: recommendation-service
   replicas: {{ .Values.recommendationService.replicas }}
-  strategy:
+  updateStrategy:
     type: RollingUpdate
-    rollingUpdate:
-      maxUnavailable: 1
-      maxSurge: 1
   selector:
     matchLabels:
       app: recommendation-service
@@ -18,6 +16,10 @@ spec:
       labels:
         app: recommendation-service
     spec:
+      initContainers:
+      - name: wait-for-mongodb
+        image: {{ .Values.recommendationService.image.repository }}:{{ .Values.recommendationService.image.tag }}
+        command: ['sh', '-c', 'echo "Waiting 15s for MongoDB to be ready..."; sleep 15; echo "Wait complete, starting service!"']
       containers:
       - name: recommendation-service
         image: {{ .Values.recommendationService.image.repository }}:{{ .Values.recommendationService.image.tag }}
@@ -53,3 +55,19 @@ spec:
           limits:
             cpu: 250m
             memory: 256Mi
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3013
+          initialDelaySeconds: 15
+          periodSeconds: 20
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 3013
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 3

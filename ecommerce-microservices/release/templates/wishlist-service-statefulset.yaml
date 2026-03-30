@@ -1,15 +1,13 @@
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: wishlist-service
   namespace: {{ .Values.namespace }}
 spec:
+  serviceName: wishlist-service
   replicas: {{ .Values.wishlistService.replicas }}
-  strategy:
+  updateStrategy:
     type: RollingUpdate
-    rollingUpdate:
-      maxUnavailable: 1
-      maxSurge: 1
   selector:
     matchLabels:
       app: wishlist-service
@@ -18,6 +16,10 @@ spec:
       labels:
         app: wishlist-service
     spec:
+      initContainers:
+      - name: wait-for-mongodb
+        image: {{ .Values.wishlistService.image.repository }}:{{ .Values.wishlistService.image.tag }}
+        command: ['sh', '-c', 'echo "Waiting 15s for MongoDB to be ready..."; sleep 15; echo "Wait complete, starting service!"']
       containers:
       - name: wishlist-service
         image: {{ .Values.wishlistService.image.repository }}:{{ .Values.wishlistService.image.tag }}
@@ -43,3 +45,19 @@ spec:
           limits:
             cpu: 250m
             memory: 256Mi
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 3007
+          initialDelaySeconds: 15
+          periodSeconds: 20
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 3007
+          initialDelaySeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 3

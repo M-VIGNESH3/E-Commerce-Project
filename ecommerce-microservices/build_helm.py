@@ -8,7 +8,6 @@ files_to_process = [
     r'kubernetes\configmaps\clahanstore-config.yaml',
     r'kubernetes\configmaps\secrets.yaml',
     r'kubernetes\ingress\kgateway-routes.yaml',
-    r'kubernetes\ingress\metallb-config.yaml',
     r'kubernetes\hpa\all-hpa.yaml',
     r'kubernetes\deployments\mongodb-statefulset.yaml'
 ]

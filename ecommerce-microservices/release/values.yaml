@@ -86,9 +86,9 @@ wishlistService:
   replicas: 1
 
 storageClass:
-  enabled: true
+  enabled: false
   name: nfs-client
-  provisioner: k8s-sigs.io/nfs-subdir-external-provisioner
+  provisioner: cluster.local/nfs-subdir-external-provisioner
 
 gateway:
   enabled: true

@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: inventory-service
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: {{ .Values.inventoryService.replicas }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app: inventory-service
+  template:
+    metadata:
+      labels:
+        app: inventory-service
+    spec:
+      containers:
+      - name: inventory-service
+        image: {{ .Values.inventoryService.image.repository }}:{{ .Values.inventoryService.image.tag }}
+        ports:
+        - containerPort: 3005
+        env:
+        - name: PORT
+          value: '3005'
+        - name: MONGO_URI
+          valueFrom:
+            secretKeyRef:
+              name: clahanstore-secrets
+              key: MONGO_URI_INVENTORY
+        resources:
+          requests:
+            cpu: 25m
+            memory: 64Mi
+          limits:
+            cpu: 250m
+            memory: 256Mi

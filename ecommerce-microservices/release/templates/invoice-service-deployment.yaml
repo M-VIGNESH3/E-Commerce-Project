@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: invoice-service
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: {{ .Values.invoiceService.replicas }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app: invoice-service
+  template:
+    metadata:
+      labels:
+        app: invoice-service
+    spec:
+      containers:
+      - name: invoice-service
+        image: {{ .Values.invoiceService.image.repository }}:{{ .Values.invoiceService.image.tag }}
+        ports:
+        - containerPort: 3010
+        env:
+        - name: PORT
+          value: '3010'
+        - name: ORDER_SERVICE_URL
+          valueFrom:
+            configMapKeyRef:
+              name: clahanstore-config
+              key: ORDER_SERVICE_URL
+        - name: PAYMENT_SERVICE_URL
+          valueFrom:
+            configMapKeyRef:
+              name: clahanstore-config
+              key: PAYMENT_SERVICE_URL
+        - name: MONGO_URI
+          valueFrom:
+            secretKeyRef:
+              name: clahanstore-secrets
+              key: MONGO_URI_INVOICE
+        resources:
+          requests:
+            cpu: 25m
+            memory: 64Mi
+          limits:
+            cpu: 250m
+            memory: 256Mi

@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: review-rating-service
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: {{ .Values.reviewRatingService.replicas }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app: review-rating-service
+  template:
+    metadata:
+      labels:
+        app: review-rating-service
+    spec:
+      containers:
+      - name: review-rating-service
+        image: {{ .Values.reviewRatingService.image.repository }}:{{ .Values.reviewRatingService.image.tag }}
+        ports:
+        - containerPort: 3012
+        env:
+        - name: PORT
+          value: '3012'
+        - name: PRODUCT_SERVICE_URL
+          valueFrom:
+            configMapKeyRef:
+              name: clahanstore-config
+              key: PRODUCT_SERVICE_URL
+        - name: MONGO_URI
+          valueFrom:
+            secretKeyRef:
+              name: clahanstore-secrets
+              key: MONGO_URI_REVIEW
+        resources:
+          requests:
+            cpu: 25m
+            memory: 64Mi
+          limits:
+            cpu: 250m
+            memory: 256Mi

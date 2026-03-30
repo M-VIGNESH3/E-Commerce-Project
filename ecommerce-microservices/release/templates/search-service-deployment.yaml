@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: search-service
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: {{ .Values.searchService.replicas }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app: search-service
+  template:
+    metadata:
+      labels:
+        app: search-service
+    spec:
+      containers:
+      - name: search-service
+        image: {{ .Values.searchService.image.repository }}:{{ .Values.searchService.image.tag }}
+        ports:
+        - containerPort: 3004
+        env:
+        - name: PORT
+          value: '3004'
+        - name: PRODUCT_SERVICE_URL
+          valueFrom:
+            configMapKeyRef:
+              name: clahanstore-config
+              key: PRODUCT_SERVICE_URL
+        - name: MONGO_URI
+          valueFrom:
+            secretKeyRef:
+              name: clahanstore-secrets
+              key: MONGO_URI_SEARCH
+        resources:
+          requests:
+            cpu: 25m
+            memory: 64Mi
+          limits:
+            cpu: 250m
+            memory: 256Mi

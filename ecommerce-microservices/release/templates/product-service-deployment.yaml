@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: product-service
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: {{ .Values.productService.replicas }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app: product-service
+  template:
+    metadata:
+      labels:
+        app: product-service
+    spec:
+      containers:
+      - name: product-service
+        image: {{ .Values.productService.image.repository }}:{{ .Values.productService.image.tag }}
+        ports:
+        - containerPort: 3003
+        env:
+        - name: PORT
+          value: '3003'
+        - name: MONGO_URI
+          valueFrom:
+            secretKeyRef:
+              name: clahanstore-secrets
+              key: MONGO_URI_PRODUCT
+        resources:
+          requests:
+            cpu: 25m
+            memory: 64Mi
+          limits:
+            cpu: 250m
+            memory: 256Mi

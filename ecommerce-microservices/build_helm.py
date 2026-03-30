@@ -7,7 +7,6 @@ files_to_process = [
     r'kubernetes\services\all-services-backup.yaml',
     r'kubernetes\configmaps\clahanstore-config.yaml',
     r'kubernetes\configmaps\secrets.yaml',
-    r'kubernetes\ingress\kgateway-routes.yaml',
     r'kubernetes\hpa\all-hpa.yaml',
     r'kubernetes\deployments\mongodb-statefulset.yaml'
 ]
@@ -53,8 +52,6 @@ def process_file(filepath, is_deployment):
         file_name = f"{name}-{kind.lower()}.yaml"
         
         if kind == 'Namespace':
-            with open(os.path.join(TEMPLATES_DIR, 'namespace.yaml'), 'w') as f:
-                f.write(doc)
             continue
             
         if kind in ['Deployment', 'StatefulSet']:

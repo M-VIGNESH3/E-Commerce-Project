@@ -1,0 +1,93 @@
+# =============================================================================
+# DEVELOPER ROLE
+# =============================================================================
+# This Role is for developers who need to deploy, debug, and manage workloads
+# but should NOT have access to sensitive data like Secrets.
+#
+# Key Design Decisions:
+#   ✅ CAN: Deploy apps, view logs, exec into pods, manage configmaps
+#   ❌ CANNOT: Read/modify Secrets, manage RBAC roles, delete the namespace
+#
+# Why restrict Secrets?
+#   Secrets contain passwords, API keys, and tokens. In a real team,
+#   only admins should manage secrets. Developers read config from ConfigMaps
+#   or environment variables injected by the platform.
+#
+# Understanding Verbs:
+#   - get:    Read a single resource by name
+#   - list:   List all resources of a type
+#   - watch:  Stream real-time changes (used by `kubectl get pods -w`)
+#   - create: Create new resources
+#   - update: Replace an existing resource entirely
+#   - patch:  Partially modify a resource (e.g., change image tag)
+#   - delete: Remove a resource
+# =============================================================================
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: developer
+  namespace: clahanstore
+  labels:
+    app.kubernetes.io/part-of: clahanstore-rbac
+    rbac.clahanstore.io/role-type: developer
+rules:
+  # --- Workload Management ---
+  # Developers can fully manage deployments and statefulsets (deploy new versions, scale, rollback)
+  - apiGroups: ["apps"]
+    resources: ["deployments", "statefulsets", "replicasets"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+
+  # --- Pod Operations ---
+  # Can view pods and their logs, and exec into containers for debugging
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "watch", "delete"]
+
+  # Pod logs — essential for debugging
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get", "list", "watch"]
+
+  # Pod exec — allows `kubectl exec -it <pod> -- /bin/sh` for debugging
+  - apiGroups: [""]
+    resources: ["pods/exec"]
+    verbs: ["create"]
+
+  # Pod port-forward — allows `kubectl port-forward` for local testing
+  - apiGroups: [""]
+    resources: ["pods/portforward"]
+    verbs: ["create"]
+
+  # --- Service & Networking ---
+  # Can manage services (create, modify endpoints for their microservices)
+  - apiGroups: [""]
+    resources: ["services", "endpoints"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+
+  # --- Configuration ---
+  # Can manage ConfigMaps (non-sensitive configuration)
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+
+  # ⚠️ NO access to Secrets — this is intentional!
+  # Secrets are managed by namespace-admins only.
+
+  # --- Autoscaling ---
+  # Can manage HorizontalPodAutoscalers
+  - apiGroups: ["autoscaling"]
+    resources: ["horizontalpodautoscalers"]
+    verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+
+  # --- Events ---
+  # Read-only access to events (useful for `kubectl describe` output)
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["get", "list", "watch"]
+
+  # --- PVCs ---
+  # Can view PVCs but not create/delete (storage managed by admins)
+  - apiGroups: [""]
+    resources: ["persistentvolumeclaims"]
+    verbs: ["get", "list", "watch"]

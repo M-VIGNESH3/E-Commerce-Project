@@ -1,0 +1,34 @@
+# =============================================================================
+# DEVELOPER ROLE BINDING
+# =============================================================================
+# Binds the "developer" Role to the "clahanstore-developers" group.
+#
+# In a real-world scenario, you'd add developers to this group in your
+# identity provider (AWS IAM, GCP IAM, LDAP, etc.), and they'd automatically
+# get the permissions defined in the "developer" Role.
+#
+# To test this binding locally, you can impersonate a developer:
+#   kubectl auth can-i get pods -n clahanstore \
+#     --as=john --as-group=clahanstore-developers
+#   # Expected: yes
+#
+#   kubectl auth can-i get secrets -n clahanstore \
+#     --as=john --as-group=clahanstore-developers
+#   # Expected: no  (developers can't access secrets)
+# =============================================================================
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: developer-binding
+  namespace: clahanstore
+  labels:
+    app.kubernetes.io/part-of: clahanstore-rbac
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: developer
+subjects:
+  - kind: Group
+    name: clahanstore-developers
+    apiGroup: rbac.authorization.k8s.io

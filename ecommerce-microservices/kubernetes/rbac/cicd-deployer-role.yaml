@@ -1,0 +1,67 @@
+# =============================================================================
+# CI/CD DEPLOYER ROLE
+# =============================================================================
+# This Role grants the CI/CD pipeline exactly what it needs to deploy:
+#   ✅ Create/Update Deployments, StatefulSets (rolling out new versions)
+#   ✅ Manage Services (exposing new endpoints)
+#   ✅ Manage ConfigMaps and Secrets (updating configuration)
+#   ✅ View Pods and Logs (verifying deployment success)
+#   ✅ Manage HPAs (autoscaling configuration)
+#   ❌ Cannot manage RBAC (no privilege escalation)
+#   ❌ Cannot manage PVs (storage managed by admins)
+#   ❌ Cannot exec into pods (not needed for deployment)
+#
+# Why not just use namespace-admin for CI/CD?
+#   A compromised CI/CD pipeline with namespace-admin could:
+#   - Delete all pods (DoS attack)
+#   - Modify RBAC to escalate privileges
+#   - Access secrets from other services
+#   With this scoped role, a compromised pipeline can only deploy — limiting blast radius.
+# =============================================================================
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: cicd-deployer
+  namespace: clahanstore
+  labels:
+    app.kubernetes.io/part-of: clahanstore-rbac
+    rbac.clahanstore.io/role-type: cicd
+rules:
+  # Deploy and manage workloads
+  - apiGroups: ["apps"]
+    resources: ["deployments", "statefulsets", "replicasets"]
+    verbs: ["get", "list", "watch", "create", "update", "patch"]
+
+  # Manage services
+  - apiGroups: [""]
+    resources: ["services", "endpoints"]
+    verbs: ["get", "list", "watch", "create", "update", "patch"]
+
+  # Manage configuration
+  - apiGroups: [""]
+    resources: ["configmaps", "secrets"]
+    verbs: ["get", "list", "watch", "create", "update", "patch"]
+
+  # View pods and logs (to verify deployment health)
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get", "list"]
+
+  # Manage autoscaling
+  - apiGroups: ["autoscaling"]
+    resources: ["horizontalpodautoscalers"]
+    verbs: ["get", "list", "watch", "create", "update", "patch"]
+
+  # View events (deployment status)
+  - apiGroups: [""]
+    resources: ["events"]
+    verbs: ["get", "list", "watch"]
+
+  # Manage service accounts (for workload SAs)
+  - apiGroups: [""]
+    resources: ["serviceaccounts"]
+    verbs: ["get", "list", "watch", "create", "update", "patch"]

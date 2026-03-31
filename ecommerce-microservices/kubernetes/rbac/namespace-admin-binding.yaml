@@ -1,0 +1,39 @@
+# =============================================================================
+# NAMESPACE ADMIN ROLE BINDING
+# =============================================================================
+# What is a RoleBinding?
+#   A RoleBinding connects a Role (permissions) to subjects (users/groups/SAs).
+#   Without a RoleBinding, a Role does nothing — it's just a definition.
+#
+# This binding grants the "namespace-admin" Role to:
+#   - The group "clahanstore-admins"
+#   - Your personal user "clahanstore-owner"
+#
+# The difference between ClusterRoleBinding and RoleBinding:
+#   - ClusterRoleBinding: grants access CLUSTER-WIDE (all namespaces)
+#   - RoleBinding: grants access ONLY in the namespace specified in metadata
+#
+# RoleBinding can reference either a Role OR a ClusterRole:
+#   - roleRef.kind: Role         → uses a namespace-scoped Role
+#   - roleRef.kind: ClusterRole  → uses a cluster-scoped ClusterRole,
+#                                  but limits it to THIS namespace only
+# =============================================================================
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: namespace-admin-binding
+  namespace: clahanstore
+  labels:
+    app.kubernetes.io/part-of: clahanstore-rbac
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: namespace-admin          # References the Role defined in namespace-admin-role.yaml
+subjects:
+  - kind: Group
+    name: clahanstore-admins
+    apiGroup: rbac.authorization.k8s.io
+  - kind: User
+    name: clahanstore-owner
+    apiGroup: rbac.authorization.k8s.io

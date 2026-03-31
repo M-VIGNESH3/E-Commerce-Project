@@ -1,0 +1,304 @@
+# =============================================================================
+# WORKLOAD ROLE BINDINGS
+# =============================================================================
+# Binds each workload ServiceAccount to its respective Role.
+#
+# Pattern:
+#   All microservices → "microservice-workload" role (same minimal permissions)
+#   MongoDB           → "mongodb-workload" role (slightly broader for PVC access)
+#
+# Why bind all microservices to the SAME role?
+#   In this architecture, all backend services have identical needs:
+#   read configmaps and discover services. If a specific service needs
+#   different permissions later, you create a new Role and bind only that SA.
+# =============================================================================
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: api-gateway-workload-binding
+  namespace: clahanstore
+  labels:
+    app.kubernetes.io/part-of: clahanstore-rbac
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: microservice-workload
+subjects:
+  - kind: ServiceAccount
+    name: api-gateway-sa
+    namespace: clahanstore
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: frontend-ui-workload-binding
+  namespace: clahanstore
+  labels:
+    app.kubernetes.io/part-of: clahanstore-rbac
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: microservice-workload
+subjects:
+  - kind: ServiceAccount
+    name: frontend-ui-sa
+    namespace: clahanstore
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: user-service-workload-binding
+  namespace: clahanstore
+  labels:
+    app.kubernetes.io/part-of: clahanstore-rbac
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: microservice-workload
+subjects:
+  - kind: ServiceAccount
+    name: user-service-sa
+    namespace: clahanstore
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: auth-service-workload-binding
+  namespace: clahanstore
+  labels:
+    app.kubernetes.io/part-of: clahanstore-rbac
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: microservice-workload
+subjects:
+  - kind: ServiceAccount
+    name: auth-service-sa
+    namespace: clahanstore
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: product-service-workload-binding
+  namespace: clahanstore
+  labels:
+    app.kubernetes.io/part-of: clahanstore-rbac
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: microservice-workload
+subjects:
+  - kind: ServiceAccount
+    name: product-service-sa
+    namespace: clahanstore
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: search-service-workload-binding
+  namespace: clahanstore
+  labels:
+    app.kubernetes.io/part-of: clahanstore-rbac
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: microservice-workload
+subjects:
+  - kind: ServiceAccount
+    name: search-service-sa
+    namespace: clahanstore
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: inventory-service-workload-binding
+  namespace: clahanstore
+  labels:
+    app.kubernetes.io/part-of: clahanstore-rbac
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: microservice-workload
+subjects:
+  - kind: ServiceAccount
+    name: inventory-service-sa
+    namespace: clahanstore
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: cart-service-workload-binding
+  namespace: clahanstore
+  labels:
+    app.kubernetes.io/part-of: clahanstore-rbac
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: microservice-workload
+subjects:
+  - kind: ServiceAccount
+    name: cart-service-sa
+    namespace: clahanstore
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: wishlist-service-workload-binding
+  namespace: clahanstore
+  labels:
+    app.kubernetes.io/part-of: clahanstore-rbac
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: microservice-workload
+subjects:
+  - kind: ServiceAccount
+    name: wishlist-service-sa
+    namespace: clahanstore
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: order-service-workload-binding
+  namespace: clahanstore
+  labels:
+    app.kubernetes.io/part-of: clahanstore-rbac
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: microservice-workload
+subjects:
+  - kind: ServiceAccount
+    name: order-service-sa
+    namespace: clahanstore
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: payment-service-workload-binding
+  namespace: clahanstore
+  labels:
+    app.kubernetes.io/part-of: clahanstore-rbac
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: microservice-workload
+subjects:
+  - kind: ServiceAccount
+    name: payment-service-sa
+    namespace: clahanstore
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: invoice-service-workload-binding
+  namespace: clahanstore
+  labels:
+    app.kubernetes.io/part-of: clahanstore-rbac
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: microservice-workload
+subjects:
+  - kind: ServiceAccount
+    name: invoice-service-sa
+    namespace: clahanstore
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: shipping-service-workload-binding
+  namespace: clahanstore
+  labels:
+    app.kubernetes.io/part-of: clahanstore-rbac
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: microservice-workload
+subjects:
+  - kind: ServiceAccount
+    name: shipping-service-sa
+    namespace: clahanstore
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: review-rating-service-workload-binding
+  namespace: clahanstore
+  labels:
+    app.kubernetes.io/part-of: clahanstore-rbac
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: microservice-workload
+subjects:
+  - kind: ServiceAccount
+    name: review-rating-service-sa
+    namespace: clahanstore
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: recommendation-service-workload-binding
+  namespace: clahanstore
+  labels:
+    app.kubernetes.io/part-of: clahanstore-rbac
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: microservice-workload
+subjects:
+  - kind: ServiceAccount
+    name: recommendation-service-sa
+    namespace: clahanstore
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: admin-service-workload-binding
+  namespace: clahanstore
+  labels:
+    app.kubernetes.io/part-of: clahanstore-rbac
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: microservice-workload
+subjects:
+  - kind: ServiceAccount
+    name: admin-service-sa
+    namespace: clahanstore
+
+---
+# MongoDB gets its own role (broader permissions for PVC management)
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: mongodb-workload-binding
+  namespace: clahanstore
+  labels:
+    app.kubernetes.io/part-of: clahanstore-rbac
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: mongodb-workload
+subjects:
+  - kind: ServiceAccount
+    name: mongodb-sa
+    namespace: clahanstore

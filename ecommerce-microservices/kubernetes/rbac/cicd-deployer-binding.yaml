@@ -1,0 +1,29 @@
+# =============================================================================
+# CI/CD DEPLOYER ROLE BINDING
+# =============================================================================
+# Binds the "cicd-deployer" Role to the "cicd-deployer" ServiceAccount.
+#
+# Notice the subject kind is "ServiceAccount" (not User or Group).
+# ServiceAccounts are namespace-scoped, so we must specify the namespace.
+#
+# Flow:
+#   ServiceAccount (cicd-deployer) → RoleBinding → Role (cicd-deployer)
+#   Pipeline authenticates as SA  →  gets permissions  →  can deploy apps
+# =============================================================================
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: cicd-deployer-binding
+  namespace: clahanstore
+  labels:
+    app.kubernetes.io/part-of: clahanstore-rbac
+    rbac.clahanstore.io/role-type: cicd
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: cicd-deployer
+subjects:
+  - kind: ServiceAccount
+    name: cicd-deployer
+    namespace: clahanstore

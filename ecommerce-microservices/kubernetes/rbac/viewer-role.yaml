@@ -1,0 +1,65 @@
+# =============================================================================
+# VIEWER (READ-ONLY) ROLE
+# =============================================================================
+# This Role grants read-only access to resources in the namespace.
+# Perfect for:
+#   - QA/Testers who need to inspect the cluster state
+#   - Stakeholders who want to monitor deployments
+#   - On-call engineers from other teams doing cross-team debugging
+#
+# Key Principle: LEAST PRIVILEGE
+#   This role can only VIEW resources. It cannot create, modify, or delete
+#   anything. This is the safest role to assign broadly.
+#
+# The verbs "get", "list", and "watch" together provide full read access:
+#   - get:   `kubectl get pod my-pod -o yaml`
+#   - list:  `kubectl get pods`
+#   - watch: `kubectl get pods -w` (real-time updates)
+# =============================================================================
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: viewer
+  namespace: clahanstore
+  labels:
+    app.kubernetes.io/part-of: clahanstore-rbac
+    rbac.clahanstore.io/role-type: viewer
+rules:
+  # View all core resources (pods, services, configmaps, endpoints, PVCs, etc.)
+  # NOTE: Secrets are intentionally excluded — viewers don't need to see passwords
+  - apiGroups: [""]
+    resources:
+      - pods
+      - services
+      - endpoints
+      - configmaps
+      - persistentvolumeclaims
+      - events
+      - serviceaccounts
+    verbs: ["get", "list", "watch"]
+
+  # View pod logs — critical for debugging and monitoring
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get", "list", "watch"]
+
+  # View workload controllers (deployments, statefulsets, replicasets)
+  - apiGroups: ["apps"]
+    resources: ["deployments", "statefulsets", "replicasets", "daemonsets"]
+    verbs: ["get", "list", "watch"]
+
+  # View autoscaling resources
+  - apiGroups: ["autoscaling"]
+    resources: ["horizontalpodautoscalers"]
+    verbs: ["get", "list", "watch"]
+
+  # View batch resources (jobs, cronjobs)
+  - apiGroups: ["batch"]
+    resources: ["jobs", "cronjobs"]
+    verbs: ["get", "list", "watch"]
+
+  # View networking resources
+  - apiGroups: ["networking.k8s.io"]
+    resources: ["ingresses", "networkpolicies"]
+    verbs: ["get", "list", "watch"]

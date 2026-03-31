@@ -1,0 +1,63 @@
+# =============================================================================
+# WORKLOAD ROLES (Least Privilege for Pods)
+# =============================================================================
+# These Roles define what each microservice pod is allowed to do
+# when interacting with the Kubernetes API.
+#
+# Most microservices DON'T need K8s API access at all — they just
+# serve HTTP requests and talk to MongoDB. But we define minimal roles
+# for scenarios like:
+#   - Reading ConfigMaps for dynamic configuration
+#   - Service discovery (looking up other service endpoints)
+#
+# The key insight: even if automountServiceAccountToken is false,
+# having these roles ready means you can enable API access per-service
+# later without granting excessive permissions.
+# =============================================================================
+
+---
+# Generic microservice role — read-only access to own config
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: microservice-workload
+  namespace: clahanstore
+  labels:
+    app.kubernetes.io/part-of: clahanstore-rbac
+    rbac.clahanstore.io/role-type: workload
+rules:
+  # Read ConfigMaps (for dynamic config reloading)
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["get", "list", "watch"]
+
+  # Read own service endpoints (for service discovery)
+  - apiGroups: [""]
+    resources: ["services", "endpoints"]
+    verbs: ["get", "list"]
+
+---
+# MongoDB-specific role — needs PVC management for StatefulSet
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: mongodb-workload
+  namespace: clahanstore
+  labels:
+    app.kubernetes.io/part-of: clahanstore-rbac
+    rbac.clahanstore.io/role-type: workload
+rules:
+  # Read ConfigMaps
+  - apiGroups: [""]
+    resources: ["configmaps"]
+    verbs: ["get", "list", "watch"]
+
+  # MongoDB may need to check its own PVC status
+  - apiGroups: [""]
+    resources: ["persistentvolumeclaims"]
+    verbs: ["get", "list", "watch"]
+
+  # Read endpoints for replica set discovery
+  - apiGroups: [""]
+    resources: ["services", "endpoints"]
+    verbs: ["get", "list"]

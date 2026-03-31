@@ -1,0 +1,36 @@
+# =============================================================================
+# VIEWER ROLE BINDING
+# =============================================================================
+# Binds the "viewer" Role to the "clahanstore-viewers" group.
+#
+# The viewer role is the safest to hand out broadly — it's read-only.
+# In a real company, you might give this to:
+#   - QA team members
+#   - Product managers who want to check deployment status
+#   - On-call engineers from other teams
+#
+# To test:
+#   kubectl auth can-i list pods -n clahanstore \
+#     --as=viewer1 --as-group=clahanstore-viewers
+#   # Expected: yes
+#
+#   kubectl auth can-i delete pods -n clahanstore \
+#     --as=viewer1 --as-group=clahanstore-viewers
+#   # Expected: no
+# =============================================================================
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: viewer-binding
+  namespace: clahanstore
+  labels:
+    app.kubernetes.io/part-of: clahanstore-rbac
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: viewer
+subjects:
+  - kind: Group
+    name: clahanstore-viewers
+    apiGroup: rbac.authorization.k8s.io

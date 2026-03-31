@@ -1,0 +1,60 @@
+# =============================================================================
+# NAMESPACE ADMIN ROLE
+# =============================================================================
+# What is a Role?
+#   A Role defines a set of permissions (rules) within a SPECIFIC namespace.
+#   It does NOT grant access by itself — it must be bound to a user/group/SA
+#   via a RoleBinding.
+#
+# This Role grants FULL access to ALL resources within the 'clahanstore' namespace.
+# Think of it as "namespace-level root" — the holder can do anything inside
+# this namespace but CANNOT touch resources in other namespaces.
+#
+# Key RBAC Concepts:
+#   - apiGroups: "" means the core API group (pods, services, secrets, etc.)
+#   - apiGroups: "apps" includes deployments, statefulsets, replicasets, daemonsets
+#   - resources: "*" means ALL resource types in that API group
+#   - verbs: "*" means ALL operations (get, list, watch, create, update, patch, delete)
+# =============================================================================
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: namespace-admin
+  namespace: clahanstore
+  labels:
+    app.kubernetes.io/part-of: clahanstore-rbac
+    rbac.clahanstore.io/role-type: admin
+rules:
+  # Full access to ALL resources in the core API group
+  # (pods, services, secrets, configmaps, persistentvolumeclaims, events, etc.)
+  - apiGroups: [""]
+    resources: ["*"]
+    verbs: ["*"]
+
+  # Full access to apps API group
+  # (deployments, statefulsets, replicasets, daemonsets)
+  - apiGroups: ["apps"]
+    resources: ["*"]
+    verbs: ["*"]
+
+  # Full access to autoscaling resources (HorizontalPodAutoscalers)
+  - apiGroups: ["autoscaling"]
+    resources: ["*"]
+    verbs: ["*"]
+
+  # Full access to batch resources (jobs, cronjobs)
+  - apiGroups: ["batch"]
+    resources: ["*"]
+    verbs: ["*"]
+
+  # Full access to networking resources (ingresses, networkpolicies)
+  - apiGroups: ["networking.k8s.io"]
+    resources: ["*"]
+    verbs: ["*"]
+
+  # Full access to RBAC resources within this namespace
+  # (allows the namespace admin to manage roles and rolebindings)
+  - apiGroups: ["rbac.authorization.k8s.io"]
+    resources: ["roles", "rolebindings"]
+    verbs: ["*"]

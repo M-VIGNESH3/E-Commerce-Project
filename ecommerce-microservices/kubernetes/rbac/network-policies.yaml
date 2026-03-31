@@ -1,0 +1,187 @@
+# =============================================================================
+# NETWORK POLICIES (Complementary to RBAC)
+# =============================================================================
+# RBAC controls WHO can interact with the K8s API.
+# Network Policies control WHICH PODS can talk to each other.
+#
+# Together, they form a defense-in-depth strategy:
+#   - RBAC: "Can user X create deployments?" (API-level)
+#   - NetworkPolicy: "Can pod A send traffic to pod B?" (Network-level)
+#
+# Strategy here:
+#   1. Default DENY all ingress traffic in the namespace
+#   2. Allow specific flows:
+#      - Gateway → frontend-ui, api-gateway
+#      - api-gateway → all backend services
+#      - Backend services → mongodb
+#      - All pods → DNS (required for service discovery)
+#
+# ⚠️ PREREQUISITE: Your cluster must have a CNI plugin that supports
+#    NetworkPolicies (e.g., Calico, Cilium, Weave). If using a basic
+#    CNI like Flannel, these policies will be created but NOT enforced.
+# =============================================================================
+
+---
+# ---- Policy 1: Default Deny All Ingress ----
+# This is the foundation of network security.
+# Without explicit "allow" rules, NO pod can receive traffic.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: clahanstore
+  labels:
+    app.kubernetes.io/part-of: clahanstore-rbac
+spec:
+  podSelector: {}            # Empty selector = applies to ALL pods in namespace
+  policyTypes:
+    - Ingress                 # Only restrict incoming traffic
+  # No ingress rules = deny all incoming traffic by default
+
+---
+# ---- Policy 2: Allow traffic to Frontend UI ----
+# The frontend needs to be reachable from outside the namespace
+# (e.g., from the kgateway / ingress controller)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-frontend-ingress
+  namespace: clahanstore
+  labels:
+    app.kubernetes.io/part-of: clahanstore-rbac
+spec:
+  podSelector:
+    matchLabels:
+      app: frontend-ui
+  policyTypes:
+    - Ingress
+  ingress:
+    # Allow from any source (the gateway may be in a different namespace)
+    - ports:
+        - protocol: TCP
+          port: 80
+
+---
+# ---- Policy 3: Allow traffic to API Gateway ----
+# API Gateway needs to be reachable from the kgateway and frontend
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-api-gateway-ingress
+  namespace: clahanstore
+  labels:
+    app.kubernetes.io/part-of: clahanstore-rbac
+spec:
+  podSelector:
+    matchLabels:
+      app: api-gateway
+  policyTypes:
+    - Ingress
+  ingress:
+    # Allow from any source (kgateway may be in another namespace)
+    - ports:
+        - protocol: TCP
+          port: 3000
+
+---
+# ---- Policy 4: Allow API Gateway → Backend Services ----
+# Only the API Gateway should talk to backend microservices.
+# This prevents direct access to backends from outside.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-backend-from-gateway
+  namespace: clahanstore
+  labels:
+    app.kubernetes.io/part-of: clahanstore-rbac
+spec:
+  podSelector:
+    matchLabels:
+      tier: backend               # All backend services should have this label
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app: api-gateway    # Only API gateway can reach backends
+      ports:
+        - protocol: TCP
+          port: 3001
+        - protocol: TCP
+          port: 3002
+        - protocol: TCP
+          port: 3003
+        - protocol: TCP
+          port: 3004
+        - protocol: TCP
+          port: 3005
+        - protocol: TCP
+          port: 3006
+        - protocol: TCP
+          port: 3007
+        - protocol: TCP
+          port: 3008
+        - protocol: TCP
+          port: 3009
+        - protocol: TCP
+          port: 3010
+        - protocol: TCP
+          port: 3011
+        - protocol: TCP
+          port: 3012
+        - protocol: TCP
+          port: 3013
+        - protocol: TCP
+          port: 3014
+
+---
+# ---- Policy 5: Allow Backend Services → MongoDB ----
+# Only backend services can connect to MongoDB.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-mongodb-from-backends
+  namespace: clahanstore
+  labels:
+    app.kubernetes.io/part-of: clahanstore-rbac
+spec:
+  podSelector:
+    matchLabels:
+      app: mongodb
+  policyTypes:
+    - Ingress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              tier: backend       # Only backend services
+      ports:
+        - protocol: TCP
+          port: 27017
+
+---
+# ---- Policy 6: Allow DNS Resolution ----
+# Without DNS, pods can't resolve service names (e.g., "mongodb" → IP).
+# DNS runs in the kube-system namespace, so we allow egress to it.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-dns-egress
+  namespace: clahanstore
+  labels:
+    app.kubernetes.io/part-of: clahanstore-rbac
+spec:
+  podSelector: {}             # Applies to all pods
+  policyTypes:
+    - Egress
+  egress:
+    # Allow DNS queries (port 53 UDP and TCP)
+    - ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    # Allow all egress to pods within the namespace
+    - to:
+        - podSelector: {}

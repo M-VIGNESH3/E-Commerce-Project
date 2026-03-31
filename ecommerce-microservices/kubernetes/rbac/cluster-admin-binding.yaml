@@ -1,0 +1,45 @@
+# =============================================================================
+# CLUSTER ADMIN BINDING
+# =============================================================================
+# What is a ClusterRoleBinding?
+#   Unlike a RoleBinding (namespace-scoped), a ClusterRoleBinding grants
+#   permissions CLUSTER-WIDE — across ALL namespaces.
+#
+# Here we bind the BUILT-IN "cluster-admin" ClusterRole to:
+#   1. A group called "platform-admins" (for team-based access)
+#   2. Your personal user "clahanstore-owner" (so YOU always have full access)
+#
+# The "cluster-admin" ClusterRole is pre-installed in every K8s cluster.
+# It grants: ALL verbs on ALL resources in ALL namespaces.
+#
+# ⚠️ WARNING: cluster-admin is the most powerful role. In production,
+#    limit this to as few users as possible. For learning, it's fine!
+#
+# How subjects work:
+#   - kind: User    → matches a specific username from your auth provider
+#   - kind: Group   → matches a group from your auth provider
+#   - kind: ServiceAccount → matches a K8s service account
+# =============================================================================
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: platform-admin-binding
+  labels:
+    app.kubernetes.io/part-of: clahanstore-rbac
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin          # Built-in ClusterRole — full access to everything
+subjects:
+  # Group-based access — all members of "platform-admins" get cluster-admin
+  - kind: Group
+    name: platform-admins
+    apiGroup: rbac.authorization.k8s.io
+
+  # Your personal user — ensures YOU always have full access
+  # Replace "clahanstore-owner" with your actual username from:
+  #   kubectl config view --minify -o jsonpath='{.contexts[0].context.user}'
+  - kind: User
+    name: clahanstore-owner
+    apiGroup: rbac.authorization.k8s.io

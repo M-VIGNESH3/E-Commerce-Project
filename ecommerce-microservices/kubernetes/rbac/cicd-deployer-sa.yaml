@@ -1,0 +1,31 @@
+# =============================================================================
+# CI/CD DEPLOYER SERVICE ACCOUNT
+# =============================================================================
+# What is a ServiceAccount?
+#   A ServiceAccount is an identity for processes running INSIDE the cluster
+#   (not human users). It's used by:
+#   - CI/CD pipelines (Jenkins, GitHub Actions, GitLab CI)
+#   - Automation tools (ArgoCD, Flux)
+#   - Any workload that needs to talk to the K8s API
+#
+# Why a dedicated SA for CI/CD?
+#   Instead of giving your CI/CD pipeline cluster-admin access (dangerous!),
+#   you create a dedicated ServiceAccount with ONLY the permissions it needs
+#   to deploy your application. This is the principle of least privilege.
+#
+# How to use this SA in your CI/CD pipeline:
+#   1. Create a token: kubectl create token cicd-deployer -n clahanstore
+#   2. Use the token in your pipeline's kubeconfig
+#   3. The pipeline can now only do what the cicd-deployer-role allows
+# =============================================================================
+
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: cicd-deployer
+  namespace: clahanstore
+  labels:
+    app.kubernetes.io/part-of: clahanstore-rbac
+    rbac.clahanstore.io/role-type: cicd
+  annotations:
+    description: "Service account for CI/CD pipelines to deploy applications"

@@ -52,4 +52,4 @@ minikube service frontend-ui
 The platform was styled using a custom `TailwindCSS` theme loaded with:
 - Dark mode primary `bg-[#0f0f1a]` with bright pink/purple typography gradients.
 - Glassmorphism effect (`backdrop-blur-xl`, `bg-white/5`).
-- Fluid `animate-slide-up`, `animate-fade-in`, and scalable animations.
+- Fluid `animate-slide-up`, `animate-fade-in`, and scalable animations. 

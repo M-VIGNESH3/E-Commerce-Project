@@ -2,20 +2,26 @@ name: CI Pipeline
 
 on:
   push:
-    branches: [ "main", "master" ]
-    tags: [ "v*.*.*" ]
+    branches:
+      - main
+      - master
+      - feature/ci-pipeline
+    tags:
+      - "v*.*.*"
   pull_request:
-    branches: [ "main", "master" ]
+    branches:
+      - main
+      - master
   workflow_dispatch:
     inputs:
       image_tag:
-        description: 'Custom tag for the Docker image (e.g., v1.2.0)'
+        description: "Custom tag for the Docker image (e.g., v1.2.0)"
         required: false
         type: string
 
 env:
-  # Using API Gateway as an example microservice to build
-  DOCKER_IMAGE: ${{ secrets.DOCKER_USERNAME }}/ecommerce-api-gateway
+  DOCKER_IMAGE: ${{ secrets.DOCKER_USERNAME }}/user-service
+  SERVICE_DIR: ecommerce-microservices/user-service
 
 jobs:
   sonarqube:
@@ -25,13 +31,19 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          
+
       - name: SonarQube Scan
         uses: SonarSource/sonarqube-scan-action@v2
+        with:
+          args: >
+            -Dsonar.projectKey=user-service
+            -Dsonar.projectName=user-service
+            -Dsonar.sources=ecommerce-microservices/user-service
+            -Dsonar.organization=YOUR_SONARCLOUD_ORG
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}
-          
+          SONAR_HOST_URL: https://sonarcloud.io
+
       - name: Send email on failure
         if: failure()
         uses: dawidd6/action-send-mail@v3
@@ -51,22 +63,32 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        run: |
+          cd ${{ env.SERVICE_DIR }}
+          npm install --no-audit --no-fund
+
       - name: Run Snyk to check for vulnerabilities
         uses: snyk/actions/node@master
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
-          args: --severity-threshold=high
+          args: --file=${{ env.SERVICE_DIR }}/package.json --severity-threshold=high
           command: test
-          
+
       - name: Upload Snyk report
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: snyk-results
           path: snyk-*.json
-          
+
       - name: Send email on failure
         if: failure()
         uses: dawidd6/action-send-mail@v3
@@ -88,31 +110,31 @@ jobs:
       image_tag: ${{ steps.set_tag.outputs.TAG }}
     steps:
       - uses: actions/checkout@v4
-      
+
       - name: Determine Image Tag
         id: set_tag
         run: |
           if [ -n "${{ github.event.inputs.image_tag }}" ]; then
-            echo "Using manually dispatched tag..."
             echo "TAG=${{ github.event.inputs.image_tag }}" >> $GITHUB_OUTPUT
           elif [[ "${{ github.ref }}" == refs/tags/* ]]; then
-            echo "Using git semantic tag..."
             echo "TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
           else
-            echo "Using git short SHA as tag..."
             echo "TAG=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
           fi
-          
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-        
+
       - name: Build Docker Image
         run: |
-          docker build -t ${{ env.DOCKER_IMAGE }}:${{ steps.set_tag.outputs.TAG }} -f ecommerce-microservices/api-gateway/Dockerfile .
-          
+          docker build \
+            -t ${{ env.DOCKER_IMAGE }}:${{ steps.set_tag.outputs.TAG }} \
+            -f ${{ env.SERVICE_DIR }}/Dockerfile \
+            ${{ env.SERVICE_DIR }}
+
       - name: Save Docker image
         run: docker save ${{ env.DOCKER_IMAGE }}:${{ steps.set_tag.outputs.TAG }} > image.tar
-        
+
       - name: Upload image artifact for scanning
         uses: actions/upload-artifact@v4
         with:
@@ -128,20 +150,20 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: docker-image
-          
+
       - name: Load Docker image
         run: docker load < image.tar
-        
+
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: '${{ env.DOCKER_IMAGE }}:${{ needs.docker_build.outputs.image_tag }}'
-          format: 'table'
-          exit-code: '1'
+          image-ref: "${{ env.DOCKER_IMAGE }}:${{ needs.docker_build.outputs.image_tag }}"
+          format: "table"
+          exit-code: "1"
           ignore-unfixed: true
-          vuln-type: 'os,library'
-          severity: 'CRITICAL,HIGH'
-          
+          vuln-type: "os,library"
+          severity: "CRITICAL,HIGH"
+
       - name: Send email on failure
         if: failure()
         uses: dawidd6/action-send-mail@v3
@@ -153,36 +175,35 @@ jobs:
           subject: GitHub Actions Delivery Pipeline Failed (Trivy Image Scan)
           to: ${{ secrets.EMAIL_RECIPIENTS }}
           from: GitHub Actions
-          body: The Trivy image scan job failed. High or critical vulnerabilities were found in the Docker image.
+          body: The Trivy image scan job failed. High or critical vulnerabilities were found.
 
   docker_push:
     name: Docker Push
-    needs: [docker_build, image_scan]
+    needs:
+      - docker_build
+      - image_scan
     runs-on: ubuntu-latest
     steps:
       - name: Download image artifact
         uses: actions/download-artifact@v4
         with:
           name: docker-image
-          
+
       - name: Load Docker image
         run: docker load < image.tar
-        
+
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
-          
-      - name: Tag custom and latest
+
+      - name: Tag and Push Docker Image
         run: |
           docker tag ${{ env.DOCKER_IMAGE }}:${{ needs.docker_build.outputs.image_tag }} ${{ env.DOCKER_IMAGE }}:latest
-          
-      - name: Push Docker Image
-        run: |
           docker push ${{ env.DOCKER_IMAGE }}:${{ needs.docker_build.outputs.image_tag }}
           docker push ${{ env.DOCKER_IMAGE }}:latest
-          
+
       - name: Send Final Success Summary Email
         uses: dawidd6/action-send-mail@v3
         with:
@@ -195,8 +216,8 @@ jobs:
           from: GitHub Actions
           body: |
             The CI pipeline completed successfully!
-            
+
             Docker Image: ${{ env.DOCKER_IMAGE }}
             Tags Pushed: ${{ needs.docker_build.outputs.image_tag }}, latest
-            
-            All scans (SonarQube, Snyk, and Trivy) passed without failing quality gates.
+
+            All scans (SonarQube, Snyk, and Trivy) passed.

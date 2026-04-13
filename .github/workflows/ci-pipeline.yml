@@ -42,7 +42,7 @@ jobs:
             -Dsonar.organization=YOUR_SONARCLOUD_ORG
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: https://sonarcloud.io
+          SONAR_HOST_URL: ${{ secrets.SONAR_URL }}
 
       - name: Send email on failure
         if: failure()

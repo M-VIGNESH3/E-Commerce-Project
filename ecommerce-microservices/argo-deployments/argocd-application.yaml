@@ -8,7 +8,7 @@ spec:
   source:
     repoURL: 'https://github.com/M-VIGNESH3/E-Commerce-Project.git'
     targetRevision: feature/argo-blue-green
-    path: argo-deployments
+    path: ecommerce-microservices/argo-deployments
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: clahanstore

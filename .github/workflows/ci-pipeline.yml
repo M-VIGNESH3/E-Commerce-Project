@@ -21,6 +21,7 @@ on:
         type: choice
         options:
           - all
+          - frontend-ui
           - api-gateway
           - user-service
           - authentication-service
@@ -64,7 +65,7 @@ jobs:
         run: |
           SERVICE="${{ github.event.inputs.service }}"
           if [ -z "$SERVICE" ] || [ "$SERVICE" = "all" ]; then
-            echo 'matrix={"service":["api-gateway","user-service","authentication-service","product-service","search-service","inventory-service","cart-service","wishlist-service","order-service","payment-service","invoice-service","shipping-service","review-rating-service","recommendation-service","admin-service"]}' >> $GITHUB_OUTPUT
+            echo 'matrix={"service":["frontend-ui","api-gateway","user-service","authentication-service","product-service","search-service","inventory-service","cart-service","wishlist-service","order-service","payment-service","invoice-service","shipping-service","review-rating-service","recommendation-service","admin-service"]}' >> $GITHUB_OUTPUT
           else
             echo "matrix={\"service\":[\"$SERVICE\"]}" >> $GITHUB_OUTPUT
           fi

@@ -21,7 +21,7 @@ data:
       enabled: true
       persistence:
         enabled: true
-        storageClassName: ebs-sc
+        storageClassName: csi-standard
         size: 10Gi
       config:
         auth_enabled: false

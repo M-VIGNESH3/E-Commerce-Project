@@ -32,7 +32,7 @@ data:
         storageSpec:
           volumeClaimTemplate:
             spec:
-              storageClassName: ebs-sc
+              storageClassName: csi-standard
               accessModes: ["ReadWriteOnce"]
               resources:
                 requests:
@@ -181,7 +181,7 @@ data:
       adminPassword: grafana-admin
       persistence:
         enabled: true
-        storageClassName: ebs-sc
+        storageClassName: csi-standard
         size: 5Gi
 
       # OIDC via Keycloak

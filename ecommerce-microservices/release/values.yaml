@@ -93,7 +93,7 @@ mongodb:
 storageClass:
   ebs:
     enabled: true
-    name: "ebs-sc"
+    name: "csi-standard"
     isDefault: "true"
     provisioner: "ebs.csi.aws.com"
     volumeBindingMode: "WaitForFirstConsumer"

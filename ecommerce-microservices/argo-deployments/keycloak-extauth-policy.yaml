@@ -1,0 +1,35 @@
+apiVersion: extensions.kgateway.dev/v1alpha1
+kind: ExtAuthPolicy
+metadata:
+  name: keycloak-oidc-auth
+  namespace: clahanstore
+spec:
+  applyTo:
+    - targetRef:
+        group: gateway.networking.k8s.io
+        kind: HTTPRoute
+        name: frontend-route
+  config:
+    oauth2:
+      oidcAuthorizationCode:
+        appUrl: "http://localhost" # Adjust to your actual external domain
+        callbackPath: /callback
+        clientId: "ecommerce-app"
+        clientSecretRef:
+          name: keycloak-client-secret
+          namespace: clahanstore
+        issuerUrl: "http://keycloak.clahanstore.svc.cluster.local:8080/realms/master"
+        scopes:
+          - openid
+          - profile
+          - email
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: keycloak-client-secret
+  namespace: clahanstore
+type: Opaque
+stringData:
+  OAUTH2_CLIENT_SECRET: "your-client-secret" # Replace with actual client secret generated in Keycloak

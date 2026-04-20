@@ -1,7 +1,7 @@
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: ecommerce-blue-green
+  name: ecommerce-backend-app
   namespace: argocd
   annotations:
     notifications.argoproj.io/subscribe.on-sync-succeeded.email: alert@clahanstore.com
@@ -11,13 +11,17 @@ spec:
   source:
     repoURL: 'https://github.com/M-VIGNESH3/E-Commerce-Project.git'
     targetRevision: feature/argo-blue-green
-    path: ecommerce-microservices/argo-deployments
+    path: ecommerce-microservices/release
+    helm:
+      valueFiles:
+        - values.yaml
   destination:
     server: 'https://kubernetes.default.svc'
     namespace: clahanstore
   syncPolicy:
     automated:
-      prune: true
+      prune: false 
       selfHeal: true
     syncOptions:
       - CreateNamespace=true
+      - ServerSideApply=true
